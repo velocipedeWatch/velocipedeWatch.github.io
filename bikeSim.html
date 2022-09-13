@@ -1,0 +1,423 @@
+<!doctype html>
+<html>
+<head>
+
+
+
+<style>
+    body{ background-color: ivory; }
+    canvas{border:1px solid red;}
+</style>
+
+</head>
+
+<body onload="load()">
+
+
+<table style="width:1000; margin: 0 auto;">
+<tr>
+<td width="1000">
+<canvas id="myCanvas" width="1000" height="500" style="border:0px solid #000000;"></canvas><br>
+</td>
+<td style="vertical-align:top">
+<label for="cog">Cog Size: </label><input type="text" name="cog" id="cog" value="16"><br>
+<label for="cr">Chainring Size: </label><input type="text" name="cr" id="cr" value="32"><br>
+<label for="rwSize">Rear Wheel Size: </label><input type="text" name="rwSize" id="rwSize" value="26"><br>
+<label for="fwSize">Front Wheel Size: </label><input type="text" name="fwSize" id="fwSize" value="26"><br>
+<label for="wheelB">Wheelbase: </label><input type="text" name="wheelB" id="wheelB" value="43"><br>
+<div class="slidecontainer">
+  <label for="bbH">BB Height: </label><label id="bbHreadout"></label><input type="range" class="slider" id="bbH" name="bbH" oninput="reload()" value="13">
+</div>
+<div class="slidecontainer">
+  <label for="susT">Suspension Travel: </label><label id="susTreadout"></label><input type="range" class="slider" id="susT" name="susT" oninput="reload()" max="3" min="-1" step=".1" value = "0">
+</div>
+<label for="csL">Chainstay Length: </label><input type="text" name="csL" id="csL" value="17"><br>
+<input type="button" value="Calc" id="calc" onclick="reload()"><br>
+<p id="ratio"></p>
+<p id="gInch"></p>
+<p id="testOut"></p>
+<p id="HTangle"></p>
+<p id="theDiag"></p>
+<p id="theTrav"></p>
+<p id="theTrav2"></p>
+<p id="lpAngle"></p>
+<p id="A1"></p>
+<p id="b1"></p>
+<p id="C1"></p>
+<p id="a"></p>
+<p id="c"></p>
+</td>
+</tr>
+</table>
+
+<script>
+// All values in the entry form are in inches and then converted to centimeters for the code to get a usable scale.
+
+var c = document.getElementById("myCanvas");
+ctx = c.getContext("2d");
+
+function load(){
+ctx.scale(4,4);
+ctx.lineWidth = .25;
+this.reload();
+}
+
+function circles(){
+	ctx.lineWidth = 2;
+	ctx.beginPath();
+	ctx.arc(20, 20, 10, 0, 2 * Math.PI);
+	ctx.stroke();
+
+	ctx.lineWidth = .25;
+}
+
+function reload(){
+ctx.clearRect(0, 0, c.width, c.height);
+var gaia = c.height * .225;
+var wheelBase = 1;
+var fwRad = (document.getElementById("fwSize").value/2)*2.54;
+var rwRad = (document.getElementById("rwSize").value/2)*2.54;
+var fwX = (c.width/4 + document.getElementById("wheelB").value*2.54)/2;
+var rwX = (c.width/4 - document.getElementById("wheelB").value*2.54)/2;
+this.backW(rwX, rwRad, gaia);
+//this.frontW(fwX, fwRad, gaia);
+this.drawGaia(gaia, c);
+this.cog(rwX, gaia - rwRad);
+this.chainRing(rwX, rwRad, gaia);
+this.steeringAxis(fwX, gaia - rwRad);
+this.htLP(fwX, gaia-fwRad-3, fwRad, gaia); //head tube lower pivot
+this.htUP(fwX, gaia-fwRad-3);
+
+// Set all the HTML components
+document.getElementById("bbH").min = document.getElementById("rwSize").value/2 - 3;
+document.getElementById("bbH").max = document.getElementById("rwSize").value/2 + 3;
+document.getElementById("ratio").innerHTML = "Ratio: " + (document.getElementById("cr").value / document.getElementById("cog").value).toPrecision(2) + ":1";
+document.getElementById("gInch").innerHTML = "Gear Inches: " + (document.getElementById("cr").value/document.getElementById("cog").value*document.getElementById("rwSize").value).toPrecision(2) + '"';
+document.getElementById("bbHreadout").innerHTML = document.getElementById("bbH").value;
+}
+
+function htLP(X, Y, fwRad, gaia){
+ctx.beginPath();
+ctx.arc(X-7.7*2.54, Y-15.1*2.54, 1, 0, 2 * Math.PI); // 5 and 16
+ctx.stroke();
+this.Arms(X, Y, fwRad, gaia);
+}
+
+function htUP(X, Y){
+ctx.beginPath();
+X = X-(7.7+2.98524)*2.54;
+Y = Y-(15.1+7.95854)*2.54;
+ctx.arc(X, Y, 1, 0, 2 * Math.PI);
+ctx.stroke();
+}
+
+function Arms(X,Y, fwRad, gaia){
+
+//Math.sqrt(8.5**2 - document.getElementById("susT").value**2)
+
+var shockUx = X-(5.2+2.98524)*2.54;
+var shockUy = Y-(12.6+7.95854)*2.54;
+
+//shock upper mount
+ctx.beginPath();
+ctx.arc(shockUx, shockUy, 1, 0, 2 * Math.PI);
+ctx.stroke();
+
+var nX = X-7.7*2.54;
+var nY = Y-15.1*2.54;
+
+var oPivX = nX+(Math.sqrt(5.8**2 - document.getElementById("susT").value**2))*2.54;
+var oPivY = nY-document.getElementById("susT").value*2.54;
+
+//circle showing shock attach path
+ctx.beginPath();
+ctx.arc(nX, nY, 2.9*2.54, 0, 2 * Math.PI);
+ctx.stroke();
+
+//the lower arm
+ctx.beginPath();
+ctx.moveTo(nX,nY);
+ctx.lineTo(oPivX, oPivY);
+ctx.lineWidth = 1;
+ctx.stroke();
+ctx.lineWidth = .25;
+
+//outer pivot location
+ctx.beginPath();
+ctx.arc(nX+(Math.sqrt(5.8**2 - document.getElementById("susT").value**2))*2.54, nY-document.getElementById("susT").value*2.54, 1, 0, 2 * Math.PI);
+ctx.stroke();
+
+    //calculate angle of lower arm
+    //document.getElementById("lpAngle").innerHTML = "Lower arm angle: " + Math.asin(document.getElementById("susT").value/5.8)*(180/Math.PI);
+
+    var shockT = Math.asin(document.getElementById("susT").value/5.8);
+    var shockD = 2.9;
+
+    //pivot on the lower arm for shock attachment
+    ctx.beginPath();
+    ctx.arc(nX + spX(shockD,shockT), nY - spY(shockD,shockT), 2, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    //calculate diagonal across suspension
+    var dx = nX+(Math.sqrt(5.8**2 - document.getElementById("susT").value**2))*2.54 - (X-(7.7+2.98524)*2.54);
+    var dy = nY-document.getElementById("susT").value*2.54 - (Y-(15.1+7.95854)*2.54);
+    var Dist = Math.sqrt(dx**2 + dy**2);
+    //document.getElementById("theDiag").innerHTML = "shock length: " + (Dist/2.54).toPrecision(4) + '"';
+
+
+    ////////////////// Shock current length ////////////////////////
+    var dx1 = (nX + spX(shockD,shockT)) - shockUx;
+    var dy1 = (nY - spY(shockD,shockT)) - shockUy;
+    var dist1 = Math.sqrt(dx1**2 + dy1**2);
+    document.getElementById("theDiag").innerHTML = "shock length: " + (dist1*10).toPrecision(4) + 'mm';
+
+	ctx.beginPath();
+	ctx.moveTo(shockUx, shockUy);
+	ctx.lineTo(nX + spX(shockD,shockT), nY - spY(shockD,shockT));
+	ctx.stroke();
+
+    //Shock travel if the shock is mounted at 50% of the length of the lower arm
+    var dx1 = shockUx - (nX+spX(shockD,-1/5.8));
+    var dy1 = shockUy - (nY-spY(shockD,-1/5.8));
+    var dist1 = Math.sqrt(dx1**2 + dy1**2);
+    var dx2 = shockUx - (nX+spX(shockD,3/5.8));
+    var dy2 = shockUy - (nY-spY(shockD,3/5.8));
+    var dist2 = Math.sqrt(dx2**2 + dy2**2);
+    document.getElementById("theTrav2").innerHTML = "Total shock compression: " + ((dist1-dist2)*10).toPrecision(4) + 'mm';
+
+///////////////////////////////
+// Start upper arm code here //
+///////////////////////////////
+
+	var uPivX = X-(7.7+2.98524)*2.54;
+	var uPivY = Y-(15.1+7.95854)*2.54;
+	var uArmL = 4.7*2.54
+
+	//ctx.beginPath();
+	//ctx.arc(uPivX, uPivY, uArmL, 0, 2 * Math.PI);
+	//ctx.stroke();
+
+	var a1 = 8.2*2.54;  // distance from fork upper and lower pivots
+	var b1 = 4.7*2.54;  // upper arm length
+	var c1 = Dist; // diag from lower fork to upper head tube poivot
+	var A1 = Math.acos(((b1 ** 2 + c1 ** 2 - a1 ** 2) / (2 * b1 * c1)));
+
+	var B1 = (A1 + Math.atan(dx/dy))*180/Math.PI;
+
+	//document.getElementById("A1").innerHTML =  B1 + " Angle C";
+	
+	var Z = (180 - B1 - 90) * Math.PI/180;
+
+	var topArmY = uArmL * Math.sin(Z) / Math.sin(90*Math.PI/180);
+	var topArmX = uArmL * Math.sin(B1*Math.PI/180) / Math.sin(90*Math.PI/180);
+
+	//document.getElementById("b1").innerHTML = Z*180/Math.PI;
+	//document.getElementById("a").innerHTML = topArmX + "Top arm X";
+	//document.getElementById("c").innerHTML = topArmY + "Top arm Y";
+	
+	ctx.beginPath();
+	ctx.moveTo(uPivX,uPivY);
+	ctx.lineTo(uPivX+topArmX, uPivY+topArmY);
+	ctx.lineWidth = 1;
+	ctx.stroke();
+	ctx.lineWidth = .25;
+
+	//Upper arm outer pivot
+	ctx.beginPath();
+	ctx.arc(uPivX + topArmX, uPivY + topArmY, 1, 0, 2 * Math.PI);
+	ctx.stroke();
+
+	//draws the outer connecting line
+	ctx.beginPath();
+	ctx.moveTo(oPivX, oPivY);
+	ctx.lineTo(uPivX+topArmX, uPivY+topArmY);
+	ctx.stroke();
+	
+	//Draw the line simulating the fork legs and front wheel
+	var forkS = (uPivY+topArmY-oPivY)/(uPivX+topArmX-oPivX);
+	var a = 24.25*2.54;
+	var A = 90;
+	var C = 90  - (Math.atan(forkS)*180/Math.PI + 10); //10 is the change in degrees from the slope between the outer pivots for the fork legs
+	var B = 180 - A - C;
+	var b = a * Math.sin(B *Math.PI/180)/Math.sin(A *Math.PI/180);
+	var c = a * Math.sin(C *Math.PI/180)/Math.sin(A *Math.PI/180);
+
+	ctx.beginPath();
+	ctx.moveTo(uPivX+topArmX, uPivY+topArmY);
+	ctx.lineTo(uPivX+topArmX+c, uPivY+topArmY+b);
+	ctx.stroke();
+
+	ctx.beginPath();
+	ctx.moveTo(nX+(Math.sqrt(5.8**2 - document.getElementById("susT").value**2))*2.54, nY-document.getElementById("susT").value*2.54);
+	ctx.lineTo(uPivX+topArmX+c, uPivY+topArmY+b);
+	ctx.stroke();
+
+	var C = 90  - (Math.atan(forkS)*180/Math.PI + 15);
+	var B = 180 - A - C;
+	var b = a * Math.sin(B *Math.PI/180)/Math.sin(A *Math.PI/180);
+	var c = a * Math.sin(C *Math.PI/180)/Math.sin(A *Math.PI/180);
+
+	ctx.beginPath();
+	ctx.arc(uPivX+topArmX+c, uPivY+topArmY+b, 1, 0, 2 * Math.PI);
+	ctx.stroke();
+
+	//Draw the front wheel
+	ctx.beginPath();
+	ctx.arc(uPivX+topArmX+c, uPivY+topArmY+b, fwRad, 0, 2 * Math.PI);
+	ctx.stroke();
+
+	//Draw shock mount fork attachment
+	var a = 7.5*2.54;
+	var C = 90  - (Math.atan(forkS)*180/Math.PI + 20);
+	var B = 180 - A - C;
+	var b = a * Math.sin(B *Math.PI/180)/Math.sin(A *Math.PI/180);
+	var c = a * Math.sin(C *Math.PI/180)/Math.sin(A *Math.PI/180);
+
+	ctx.beginPath();
+	ctx.arc(uPivX+topArmX+c, uPivY+topArmY+b, 1, 0, 2 * Math.PI);
+	ctx.stroke();
+
+	//var dx = oPivX - (uPivX+topArmX);
+	//var dy = oPivY - (uPivY+topArmY);
+	//var dist = Math.sqrt(dx**2 + dy**2);
+	//document.getElementById("c").innerHTML = (uPivY+topArmY-oPivY)/(uPivX+topArmX-oPivX) // "Distance betwen fork pivots (should be 8.2in): " + (dist/2.54).toPrecision(2) + "in";
+
+
+}
+
+function spX(mDist, lpAngle){
+    //lpAngle = lpAngle*2.54
+    var B1 = Math.PI/180 * (90);
+    var C1 = Math.PI/180 * ((180 - B1*(180/Math.PI) - lpAngle*(180/Math.PI)));
+    var shockX = (mDist*Math.sin(C1)/Math.sin(B1))*2.54;
+
+    return shockX;
+}
+
+function spY(mDist, lpAngle){
+    //lpAngle = lpAngle*2.54
+    var A1 = lpAngle;
+    var B1 = Math.PI/180 * (90);
+    var shockY = (mDist*Math.sin(A1)/Math.sin(B1))*2.54;
+
+    return shockY;
+}
+
+function backW(X, wheelRadius, gaia){
+ctx.beginPath();
+ctx.arc(X, gaia-wheelRadius, wheelRadius, 0, 2 * Math.PI);
+ctx.stroke();
+}
+
+function frontW(X, wheelRadius, gaia){
+ctx.beginPath();
+ctx.arc(X, gaia-wheelRadius, wheelRadius, 0, 2 * Math.PI);
+ctx.moveTo(X, gaia-wheelRadius);
+ctx.arc(X, gaia-wheelRadius, 1, 0, 2 * Math.PI);
+ctx.stroke();
+}
+
+function cog(X,Y){
+
+var cogR = radCalc(document.getElementById("cog").value);
+ctx.beginPath();
+ctx.arc(X, Y, cogR, 0, 2 * Math.PI);
+ctx.stroke();
+
+}
+
+function chainRing(rwX, rwRad, gaia){
+
+var crR = radCalc(document.getElementById("cr").value);
+var csL = document.getElementById("csL").value*2.54;
+var bbH = document.getElementById("bbH").value*2.54;
+var bbOa = (gaia-rwRad)-(gaia - bbH);
+
+if(bbOa > 0){
+   }else{
+   bbOa = bbOa * -1;
+}
+
+var crX = rwX+Math.sqrt(csL**2 - bbOa**2)
+
+ctx.beginPath();
+ctx.arc(crX, gaia-bbH, crR, 0, 2 * Math.PI);
+ctx.stroke();
+
+this.chain(crX, gaia-bbH, crR, rwX, gaia-rwRad, radCalc(document.getElementById("cog").value));
+this.cranks(crX, gaia-bbH);
+}
+
+function chain(crX, crY, crD, cogX, cogY, cogD){
+    var dx = crX - cogX;
+    var dy = crY - cogY;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+
+    // Rotation from the x-axis.
+    var angle1 = Math.atan2(dy, dx);
+
+    // Relative angle of the normals. This is equal for both circles.
+    var angle2 = Math.acos((cogD - crD)/dist);
+
+    ctx.beginPath();
+    ctx.arc(cogX, cogY, cogD, angle2+angle1, angle1-angle2);
+    ctx.lineTo(crX + crD * Math.cos(angle1 - angle2), crY + crD * Math.sin(angle1 - angle2));
+    ctx.arc(crX, crY, crD, angle1-angle2, angle2+angle1);
+    ctx.lineTo(cogX + cogD * Math.cos(angle1 + angle2), cogY + cogD * Math.sin(angle1 + angle2));
+    //ctx.fillStyle = 'white';
+    //ctx.fill();
+    ctx.stroke();
+}
+
+function cranks(crX, crY){
+
+    var dx = crX - crX+17.5;
+    var dy = crY - crY;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+
+    // Rotation from the x-axis.
+    var angle1 = Math.atan2(dy, dx);
+
+    // Relative angle of the normals. This is equal for both circles.
+    var angle2 = Math.acos((2 - 3)/dist);
+    ctx.beginPath();
+    ctx.arc(crX, crY, 3, angle2+angle1, angle1-angle2);
+    ctx.lineTo(crX + 3 * Math.cos(angle1 + angle2), crY - 3 * Math.sin(angle1 + angle2));
+    ctx.arc(crX+17.5, crY, 2, angle1-angle2, angle2+angle1);
+    ctx.lineTo(crX + 2 * Math.cos(angle1 - angle2), crY - 3 * Math.sin(angle1 - angle2));
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    ctx.stroke();
+}
+
+function radCalc(teeth){
+   var a,b,c,d,e;
+   
+   a = .5 / 2; //pitch = .5"
+   b = teeth * 2;
+   c = 360 / b;
+   d =  Math.sin ((c * Math.PI) / 180);
+   e = (a / d) * 2; //final diameter in inches
+
+   return e/2 * 2.54;
+  
+}
+
+function steeringAxis(X, Y){
+ctx.setLineDash([3, 1]);
+ctx.moveTo(X-3,Y);
+ctx.lineTo(X-8.13*2.54-4, Y-23.34*2.54);
+ctx.stroke();
+ctx.setLineDash([0, 0]);
+document.getElementById("HTangle").innerHTML = "Headtube Angle: " + (Math.atan(9.13/24.34)*180/Math.PI).toPrecision(5);
+}
+
+function drawGaia(gaia, c){
+ctx.moveTo(0,gaia);
+ctx.lineTo(c.width, gaia);
+ctx.stroke();
+}
+
+</script>
+</body>
+</html>
