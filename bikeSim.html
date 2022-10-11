@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+
+
+
+<style>
+    body{ background-color: ivory; }
+    canvas{border:1px solid red;}
+</style>
+
+</head>
+
+<body onload="load()">
+
+
+<table style="width:1000; margin: 0 auto;">
+<tr>
+<td width="1000">
+<canvas id="myCanvas" width="1000" height="500" style="border:0px solid #000000;"></canvas><br>
+</td>
+<td style="vertical-align:top">
+<label for="cog">Cog Size: </label><input type="text" name="cog" id="cog" value="16"><br>
+<label for="cr">Chainring Size: </label><input type="text" name="cr" id="cr" value="32"><br>
+<label for="rwSize">Rear Wheel Size: </label><input type="text" name="rwSize" id="rwSize" value="26"><br>
+<label for="fwSize">Front Wheel Size: </label><input type="text" name="fwSize" id="fwSize" value="26"><br>
+<label for="wheelB">Wheelbase: </label><input type="text" name="wheelB" id="wheelB" value="43"><br>
+<div class="slidecontainer">
+  <label for="bbH">BB Height: </label><label id="bbHreadout"></label><input type="range" class="slider" id="bbH" name="bbH" oninput="reload()" value="13">
+</div>
+<div class="slidecontainer">
+  <label for="susT">Suspension Travel: </label><label id="susTreadout"></label><input type="range" class="slider" id="susT" name="susT" oninput="reload()" max="3" min="-1" step=".1" value = "0">
+</div>
+<label for="csL">Chainstay Length: </label><input type="text" name="csL" id="csL" value="17"><br>
+<input type="button" value="Calc" id="calc" onclick="reload()"><br>
+<p id="ratio"></p>
+<p id="gInch"></p>
+<p id="testOut"></p>
+<p id="HTangle"></p>
+<p id="theDiag"></p>
+<p id="theTrav"></p>
+<p id="theTrav2"></p>
+<p id="lpAngle"></p>
+<p id="A1"></p>
+<p id="b1"></p>
+<p id="C1"></p>
+<p id="a"></p>
+<p id="c"></p>
+</td>
+</tr>
+</table>
+
+<script src="bikeSim.js" type="text/javascript"></script>
+
+</body>
+</html>
